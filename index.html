@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromptForge AI - Expert Prompt Engineering</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate-900 */
+            color: #f1f5f9;
+        }
+        .mono-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .history-item:hover .delete-btn {
+            opacity: 1;
+        }
+        /* Skeleton Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .category-btn.active {
+            background-color: #2563eb;
+            border-color: #3b82f6;
+            color: white;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+        /* Custom Select Styling */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-900/50 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight">PromptForge <span class="text-blue-500">AI</span></h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <div id="tierBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400">
+                    FREE TIER
+                </div>
+                <div class="text-xs text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
+                    v1.5 • Smart Auth
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Column: Input & Controls -->
+            <div class="lg:col-span-5 space-y-6">
+                <section class="glass-card p-6 rounded-2xl shadow-xl">
+                    <!-- Settings -->
+                    <div class="mb-6 space-y-4">
+                        <div>
+                            <label for="modelSelect" class="block text-sm font-medium text-slate-400 mb-2 flex items-center gap-2">
+                                <i data-lucide="cpu" class="w-4 h-4 text-blue-400"></i> AI Engine Model
+                            </label>
+                            <select id="modelSelect" onchange="setModel(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-slate-200 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all cursor-pointer">
+                                <option value="openai">OpenAI (Default)</option>
+                                <option value="openai-fast">OpenAI Fast</option>
+                                <option value="openai-large">OpenAI Large</option>
+                                <option value="qwen-coder">Qwen Coder</option>
+                                <option value="mistral">Mistral</option>
+                                <option value="gemini">Gemini</option>
+                                <option value="gemini-fast">Gemini Fast</option>
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="grok">Grok</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-400 mb-2">Select Category</label>
+                        <div id="categoryContainer" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <button onclick="setCategory('General')" class="category-btn active px-3 py-2 text-[10px] font-bold uppercase rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 transition-all">General</button>
+                            <button onclick="setCategory('Coding')" class="category-btn px-3 py-2 text-[10px] font-bold uppercase rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 transition-all">Coding</button>
+                            <button onclick="setCategory('Creative')" class="category-btn px-3 py-2 text-[10px] font-bold uppercase rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 transition-all">Creative</button>
+                            <button onclick="setCategory('Business')" class="category-btn px-3 py-2 text-[10px] font-bold uppercase rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 transition-all">Business</button>
+                            <button onclick="setCategory('Academic')" class="category-btn px-3 py-2 text-[10px] font-bold uppercase rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 transition-all">Academic</button>
+                            <button onclick="setCategory('Image')" class="category-btn px-3 py-2 text-[10px] font-bold uppercase rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 transition-all">Image</button>
+                            <button onclick="setCategory('Video')" class="category-btn px-3 py-2 text-[10px] font-bold uppercase rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 transition-all">Video</button>
+                            <button onclick="setCategory('Song')" class="category-btn px-3 py-2 text-[10px] font-bold uppercase rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 transition-all">Song</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="rawPrompt" class="block text-sm font-medium text-slate-400 mb-2">Raw Prompt (Initial Idea)</label>
+                        <textarea id="rawPrompt" rows="5" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-slate-200 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all placeholder:text-slate-600" placeholder="Type your prompt idea here..."></textarea>
+                    </div>
+
+                    <button id="enhanceBtn" onclick="handleEnhance()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-blue-900/20">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        Forge Enhanced Prompt
+                    </button>
+                </section>
+
+                <!-- History Section -->
+                <section class="glass-card p-6 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500">Recent Forges</h2>
+                        <button onclick="clearHistory()" class="text-xs text-red-400 hover:text-red-300 transition-colors">Clear All</button>
+                    </div>
+                    <div id="historyList" class="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                        <!-- History Items -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Column: Output & Analysis -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Welcome/Empty State -->
+                <div id="emptyState" class="h-full flex flex-col items-center justify-center text-center p-12 glass-card rounded-2xl">
+                    <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                        <i data-lucide="terminal" class="w-10 h-10 text-slate-600"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold mb-2">Ready to Optimize?</h2>
+                    <p class="text-slate-400 max-w-sm">Enter your prompt idea and let the engine forge it into excellence. Mod percuma aktif secara lalai.</p>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loadingState" class="hidden space-y-6">
+                    <div class="glass-card p-6 rounded-2xl animate-pulse">
+                        <div class="h-4 bg-slate-800 rounded w-1/4 mb-4"></div>
+                        <div class="space-y-2">
+                            <div class="h-4 bg-slate-800 rounded w-full"></div>
+                            <div class="h-4 bg-slate-800 rounded w-5/6"></div>
+                            <div class="h-4 bg-slate-800 rounded w-4/6"></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="h-32 bg-slate-800 rounded-2xl"></div>
+                        <div class="h-32 bg-slate-800 rounded-2xl"></div>
+                    </div>
+                </div>
+
+                <!-- Result Display -->
+                <div id="resultContainer" class="hidden space-y-6">
+                    <div class="glass-card rounded-2xl overflow-hidden border border-blue-500/30">
+                        <div class="bg-blue-600/10 px-6 py-3 border-b border-blue-500/20 flex items-center justify-between">
+                            <span class="text-xs font-bold uppercase tracking-widest text-blue-400 flex items-center gap-2">
+                                <i data-lucide="check-circle" class="w-4 h-4"></i> Resulting Forge
+                            </span>
+                            <button onclick="copyToClipboard('enhancedResult')" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-md transition-all flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copy
+                            </button>
+                        </div>
+                        <div class="p-6">
+                            <pre id="enhancedResult" class="mono-font text-sm text-blue-50 bg-slate-950/50 p-4 rounded-xl whitespace-pre-wrap border border-slate-800"></pre>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-card p-6 rounded-2xl border border-slate-800">
+                            <h3 class="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
+                                <i data-lucide="brain" class="w-4 h-4 text-purple-500"></i> Reasoning
+                            </h3>
+                            <ul id="reasoningList" class="space-y-2 text-sm text-slate-300"></ul>
+                        </div>
+                        <div class="glass-card p-6 rounded-2xl border border-slate-800">
+                            <h3 class="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
+                                <i data-lucide="lightbulb" class="w-4 h-4 text-amber-500"></i> Pro-Tips
+                            </h3>
+                            <ul id="tipsList" class="space-y-2 text-sm text-slate-300"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full shadow-2xl transition-all opacity-0 translate-y-10 pointer-events-none z-[100] flex items-center gap-2">
+        <i id="toastIcon" data-lucide="check-circle-2" class="w-5 h-5"></i>
+        <span id="toastMessage">Successfully copied to clipboard!</span>
+    </div>
+
+    <script>
+        /**
+         * ==========================================
+         * KONFIGURASI API KEY
+         * ==========================================
+         * Masukkan kunci anda di bawah. 
+         * Jika dibiarkan kosong atau "YOUR_API_KEY_HERE", 
+         * aplikasi akan menggunakan mod "Free Tier".
+         */
+        const HARDCODED_API_KEY = ""; 
+        /** ========================================== */
+
+        // State Management
+        let currentCategory = 'General';
+        let currentModel = 'openai';
+        let history = JSON.parse(localStorage.getItem('forge_history_v2') || '[]');
+
+        // Initialize UI
+        lucide.createIcons();
+        renderHistory();
+        updateTierBadge();
+
+        function updateTierBadge() {
+            const badge = document.getElementById('tierBadge');
+            const isFree = !HARDCODED_API_KEY || HARDCODED_API_KEY === "YOUR_API_KEY_HERE";
+            
+            if (isFree) {
+                badge.innerText = "FREE TIER";
+                badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400";
+            } else {
+                badge.innerText = "PRO TIER";
+                badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400";
+            }
+        }
+
+        function setCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                if(btn.innerText.trim().toUpperCase() === cat.toUpperCase()) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+        }
+
+        function setModel(model) {
+            currentModel = model;
+        }
+
+        async function handleEnhance() {
+            const rawPromptInput = document.getElementById('rawPrompt');
+            const promptValue = rawPromptInput.value.trim();
+
+            if (!promptValue) {
+                showToast("Sila masukkan prompt terlebih dahulu!", "red");
+                return;
+            }
+
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('resultContainer').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('hidden');
+            const btn = document.getElementById('enhanceBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processing...`;
+            lucide.createIcons();
+
+            try {
+                const systemPrompt = `You are an Expert Prompt Engineer. Transform the user's simple idea into a high-quality instruction.
+                CATEGORY: ${currentCategory}
+                
+                Rules:
+                1. Provide a highly specific, context-rich "enhancedPrompt".
+                2. If the category is VIDEO, include camera movement, lighting, and style instructions.
+                3. If the category is SONG, include genre, tempo, mood, and structural elements (e.g., [Verse], [Chorus]).
+                4. List 3-4 "reasoning" points in English explaining the technical improvements.
+                5. Provide 3 specific "tips" in English for further manual refinement.
+                6. Respond ONLY with a valid JSON object: { "enhancedPrompt": "string", "reasoning": ["str1", "str2"], "tips": ["tip1", "tip2"] }
+                7. Language: English.`;
+
+                const headers = { 'Content-Type': 'application/json' };
+                
+                // Logik Pintar: Hanya hantar header jika kunci wujud dan bukan placeholder
+                if (HARDCODED_API_KEY && HARDCODED_API_KEY !== "" && HARDCODED_API_KEY !== "YOUR_API_KEY_HERE") {
+                    headers['Authorization'] = `Bearer ${HARDCODED_API_KEY}`;
+                }
+
+                const response = await fetchWithRetry("https://text.pollinations.ai/openai/v1/chat/completions", {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                        model: currentModel,
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: promptValue }
+                        ],
+                        seed: Math.floor(Math.random() * 1000)
+                    })
+                });
+
+                const data = await response.json();
+                const aiContent = data.choices[0].message.content;
+                
+                let parsedData;
+                try {
+                    const jsonRegex = /{.*}/s;
+                    const match = aiContent.match(jsonRegex);
+                    parsedData = JSON.parse(match ? match[0] : aiContent);
+                } catch (e) {
+                    throw new Error("Gagal menguraikan respons AI. Sila cuba lagi.");
+                }
+
+                displayResults(parsedData);
+                addToHistory(promptValue, parsedData);
+
+            } catch (error) {
+                console.error(error);
+                showToast(error.message, "red");
+                document.getElementById('emptyState').classList.remove('hidden');
+            } finally {
+                document.getElementById('loadingState').classList.add('hidden');
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="sparkles" class="w-5 h-5"></i> Forge Enhanced Prompt`;
+                lucide.createIcons();
+            }
+        }
+
+        async function fetchWithRetry(url, options, retries = 5, backoff = 1000) {
+            try {
+                const res = await fetch(url, options);
+                if (!res.ok) throw new Error(`Ralat API (${res.status})`);
+                return res;
+            } catch (err) {
+                if (retries > 0) {
+                    await new Promise(r => setTimeout(r, backoff));
+                    return fetchWithRetry(url, options, retries - 1, backoff * 2);
+                }
+                throw err;
+            }
+        }
+
+        function displayResults(data) {
+            document.getElementById('resultContainer').classList.remove('hidden');
+            document.getElementById('enhancedResult').innerText = data.enhancedPrompt;
+
+            const reasoningList = document.getElementById('reasoningList');
+            reasoningList.innerHTML = data.reasoning.map(r => `<li class="flex gap-2"><span class="text-blue-500">•</span> ${r}</li>`).join('');
+
+            const tipsList = document.getElementById('tipsList');
+            tipsList.innerHTML = data.tips.map(t => `<li class="flex gap-2"><span class="text-green-500">→</span> ${t}</li>`).join('');
+        }
+
+        function addToHistory(raw, result) {
+            const newItem = {
+                id: Date.now(),
+                category: currentCategory,
+                model: currentModel,
+                raw: raw.length > 50 ? raw.substring(0, 50) + '...' : raw,
+                data: result
+            };
+            history.unshift(newItem);
+            if (history.length > 20) history.pop();
+            localStorage.setItem('forge_history_v2', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            if (history.length === 0) {
+                list.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">Tiada sejarah lagi.</div>`;
+                return;
+            }
+
+            list.innerHTML = history.map(item => `
+                <div class="history-item relative group bg-slate-800/50 border border-slate-700 p-3 rounded-xl cursor-pointer hover:bg-slate-700 transition-all" onclick="loadFromHistory(${item.id})">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex gap-1">
+                            <span class="text-[9px] font-black uppercase text-blue-400 bg-blue-900/30 px-2 py-0.5 rounded">${item.category}</span>
+                            <span class="text-[9px] font-medium uppercase text-slate-400 bg-slate-900/50 px-2 py-0.5 rounded">${item.model || 'openai'}</span>
+                        </div>
+                        <button onclick="deleteHistoryItem(event, ${item.id})" class="delete-btn opacity-0 text-slate-500 hover:text-red-400 transition-opacity">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-300 truncate">${item.raw}</p>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function loadFromHistory(id) {
+            const item = history.find(h => h.id === id);
+            if (item) {
+                document.getElementById('emptyState').classList.add('hidden');
+                document.getElementById('resultContainer').classList.remove('hidden');
+                document.getElementById('rawPrompt').value = item.raw.replace('...', '');
+                
+                if (item.model) {
+                    currentModel = item.model;
+                    document.getElementById('modelSelect').value = item.model;
+                }
+                
+                setCategory(item.category);
+                displayResults(item.data);
+            }
+        }
+
+        function deleteHistoryItem(e, id) {
+            e.stopPropagation();
+            history = history.filter(h => h.id !== id);
+            localStorage.setItem('forge_history_v2', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function clearHistory() {
+            if(confirm("Padam semua sejarah?")) {
+                history = [];
+                localStorage.removeItem('forge_history_v2');
+                renderHistory();
+            }
+        }
+
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            const tempInput = document.createElement("textarea");
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            showToast("Berhasil disalin!");
+        }
+
+        function showToast(message, color = "green") {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            
+            toast.className = `fixed bottom-8 left-1/2 -translate-x-1/2 text-white px-6 py-3 rounded-full shadow-2xl transition-all z-[100] flex items-center gap-2 ${color === 'red' ? 'bg-red-600' : 'bg-green-600'}`;
+            toastMsg.innerText = message;
+            
+            toast.style.opacity = "1";
+            toast.style.transform = "translate(-50%, 0)";
+            
+            setTimeout(() => {
+                toast.style.opacity = "0";
+                toast.style.transform = "translate(-50%, 20px)";
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
